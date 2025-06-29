@@ -1,6 +1,7 @@
 # app.py
 import streamlit as st
 import joblib
+import nltk
 
 nltk.download("punkt")
 nltk.download("stopwords")
