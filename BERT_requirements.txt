@@ -1,0 +1,16 @@
+# Core app dependencies
+streamlit
+transformers
+torch
+
+# Text preprocessing and classification
+scikit-learn
+nltk
+joblib
+pandas
+numpy
+re
+
+# Visualization
+matplotlib
+seaborn
