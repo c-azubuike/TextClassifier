@@ -1,17 +1,11 @@
-# Core app dependencies
 torch
-streamlit
 transformers
 datasets
-
-# Text preprocessing and classification
+streamlit
 scikit-learn
 nltk
 joblib
 pandas
 numpy
-re
-
-# Visualization
 matplotlib
 seaborn
