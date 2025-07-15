@@ -2,8 +2,6 @@ import streamlit as st
 import torch
 import numpy as np
 import joblib
-import nltk
-nltk.download("punkt")
 
 from transformers import BertTokenizerFast, BertForSequenceClassification
 from BERT_preprocessing import fast_preprocess
