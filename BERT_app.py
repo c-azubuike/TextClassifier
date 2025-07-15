@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import torch
 import numpy as np
@@ -31,15 +32,13 @@ def predict_with_bert(text):
 
     preprocessed = fast_preprocess(text)
     is_short = len(preprocessed.split()) <= short_threshold
-    label = label_encoder.inverse_transform([pred_idx])[0]
 
-    # Return full probability dictionary with percentages
     prob_dict = {label: float(prob) * 100 for label, prob in zip(label_encoder.classes_, probs)}
     sorted_probs = dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=True))
-
+    label = label_encoder.inverse_transform([pred_idx])[0]
     return label, confidence, is_short, sorted_probs
 
-# App UI
+# Streamlit app layout
 st.set_page_config(page_title="TOS Classifier", layout="centered")
 st.title("TOS Fundraiser Classifier")
 st.markdown("Classify fundraiser text into categories like **clear**, **adult content**, **self harm**, etc.")
@@ -51,15 +50,23 @@ if st.button("Classify"):
         st.warning("Please enter some text.")
     else:
         label, confidence, is_short, sorted_probs = predict_with_bert(text_input)
+        st.session_state.prediction_result = {
+            "label": label,
+            "confidence": confidence,
+            "is_short": is_short,
+            "sorted_probs": sorted_probs
+        }
 
-        st.success(f"**Prediction:** {label}")
-        st.info(f"**Confidence:** {confidence * 100:.2f}%")
+# Show classification result
+if "prediction_result" in st.session_state:
+    result = st.session_state.prediction_result
+    st.success(f"**Prediction:** {result['label']}")
+    st.info(f"**Confidence:** {result['confidence'] * 100:.2f}%")
 
-        if is_short:
-            st.warning("⚠️ This text is very short. Prediction may be less reliable.")
+    if result["is_short"]:
+        st.warning("⚠️ This text is very short. Prediction may be less reliable.")
 
-        # More Detail button for full probabilities
-        if st.button("More Detail"):
-            st.markdown("### Category Probabilities:")
-            prob_df = pd.DataFrame(sorted_probs.items(), columns=["Label", "Probability (%)"])
-            st.table(prob_df.style.format({"Probability (%)": "{:.1f}"}))
+    if st.button("More Detail"):
+        st.markdown("### Category Probabilities:")
+        prob_df = pd.DataFrame(result["sorted_probs"].items(), columns=["Label", "Probability (%)"])
+        st.table(prob_df.style.format({"Probability (%)": "{:.1f}"}))
