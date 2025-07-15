@@ -45,6 +45,9 @@ st.markdown("Classify fundraiser text into categories like **clear**, **adult co
 
 text_input = st.text_area("Enter fundraiser text here:")
 
+if "show_probs" not in st.session_state:
+    st.session_state.show_probs = False
+
 if st.button("Classify"):
     if not text_input.strip():
         st.warning("Please enter some text.")
@@ -56,8 +59,8 @@ if st.button("Classify"):
             "is_short": is_short,
             "sorted_probs": sorted_probs
         }
+        st.session_state.show_probs = False  # Reset on new classification
 
-# Show classification result
 if "prediction_result" in st.session_state:
     result = st.session_state.prediction_result
     st.success(f"**Prediction:** {result['label']}")
@@ -67,6 +70,10 @@ if "prediction_result" in st.session_state:
         st.warning("⚠️ This text is very short. Prediction may be less reliable.")
 
     if st.button("More Detail"):
+        st.session_state.show_probs = not st.session_state.show_probs
+
+    if st.session_state.show_probs:
         st.markdown("### Category Probabilities:")
         prob_df = pd.DataFrame(result["sorted_probs"].items(), columns=["Label", "Probability (%)"])
         st.table(prob_df.style.format({"Probability (%)": "{:.1f}"}))
+
