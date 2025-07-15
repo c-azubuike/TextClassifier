@@ -1,12 +1,13 @@
 import streamlit as st
 import torch
 import numpy as np
+import pandas as pd
 import joblib
 
 from transformers import BertTokenizerFast, BertForSequenceClassification
 from BERT_preprocessing import fast_preprocess
 
-# Loading all model assets
+# Load assets
 @st.cache_resource
 def load_assets():
     model = BertForSequenceClassification.from_pretrained("model_assets/bert_model")
@@ -19,7 +20,7 @@ def load_assets():
 
 bert_model, bert_tokenizer, label_encoder, short_threshold = load_assets()
 
-# bert prediction function
+# Prediction function
 def predict_with_bert(text):
     inputs = bert_tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
     with torch.no_grad():
@@ -31,9 +32,14 @@ def predict_with_bert(text):
     preprocessed = fast_preprocess(text)
     is_short = len(preprocessed.split()) <= short_threshold
     label = label_encoder.inverse_transform([pred_idx])[0]
-    return label, confidence, is_short, dict(zip(label_encoder.classes_, probs.round(3)))
 
-# app UI
+    # Return full probability dictionary with percentages
+    prob_dict = {label: float(prob) * 100 for label, prob in zip(label_encoder.classes_, probs)}
+    sorted_probs = dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=True))
+
+    return label, confidence, is_short, sorted_probs
+
+# App UI
 st.set_page_config(page_title="TOS Classifier", layout="centered")
 st.title("TOS Fundraiser Classifier")
 st.markdown("Classify fundraiser text into categories like **clear**, **adult content**, **self harm**, etc.")
@@ -44,7 +50,7 @@ if st.button("Classify"):
     if not text_input.strip():
         st.warning("Please enter some text.")
     else:
-        label, confidence, is_short, prob_dict = predict_with_bert(text_input)
+        label, confidence, is_short, sorted_probs = predict_with_bert(text_input)
 
         st.success(f"**Prediction:** {label}")
         st.info(f"**Confidence:** {confidence * 100:.2f}%")
@@ -52,5 +58,8 @@ if st.button("Classify"):
         if is_short:
             st.warning("⚠️ This text is very short. Prediction may be less reliable.")
 
-        st.markdown("**Category Probabilities:**")
-        st.json(prob_dict)
+        # More Detail button for full probabilities
+        if st.button("More Detail"):
+            st.markdown("### Category Probabilities:")
+            prob_df = pd.DataFrame(sorted_probs.items(), columns=["Label", "Probability (%)"])
+            st.table(prob_df.style.format({"Probability (%)": "{:.1f}"}))
