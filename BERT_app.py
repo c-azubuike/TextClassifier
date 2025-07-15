@@ -40,7 +40,7 @@ def predict_with_bert(text):
 
 # Streamlit app layout
 st.set_page_config(page_title="TOS Classifier", layout="centered")
-st.title("TOS Fundraiser Classifier")
+st.title("TOS Content Classifier")
 st.markdown("Classify fundraiser text into categories like **clear**, **adult content**, **self harm**, etc.")
 
 text_input = st.text_area("Enter fundraiser text here:")
